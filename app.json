@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "MapBites",
+    "slug": "mapbites",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mapbites.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to location to show restaurants on the map and allow you to pin locations.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to import restaurant media from social media.",
+        "NSCameraUsageDescription": "This app needs access to your camera to take photos of restaurants."
+      }
+    },
+    "android": {
+      "package": "com.mapbites.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-dev-client",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you import restaurant media from social platforms.",
+          "cameraPermission": "The app accesses your camera to let you take photos of restaurants."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow MapBites to use your location to show restaurants on the map and allow you to pin locations."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id"
+      }
+    }
+  }
+}

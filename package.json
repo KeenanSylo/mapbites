@@ -1,0 +1,46 @@
+{
+  "name": "mapbites",
+  "version": "1.0.0",
+  "description": "Restaurant Map App - Discover restaurants from social media",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "build:ios": "expo run:ios",
+    "build:android": "expo run:android",
+    "lint": "expo lint",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-navigation/bottom-tabs": "^7.4.7",
+    "@react-navigation/native": "^7.1.17",
+    "@react-navigation/stack": "^7.4.8",
+    "@rnmapbox/maps": "^10.1.45",
+    "@supabase/supabase-js": "^2.58.0",
+    "expo": "~54.0.10",
+    "expo-dev-client": "~6.0.12",
+    "expo-file-system": "^19.0.15",
+    "expo-image-picker": "^17.0.8",
+    "expo-location": "^19.0.7",
+    "expo-sharing": "^14.0.7",
+    "expo-status-bar": "~3.0.8",
+    "react": "19.1.0",
+    "react-native": "0.81.4",
+    "react-native-exif": "^0.5.0",
+    "react-native-receive-sharing-intent": "^2.0.0",
+    "react-native-safe-area-context": "^5.6.1",
+    "react-native-screens": "^4.16.0",
+    "react-native-share-extension": "^2.0.0",
+    "react-native-url-polyfill": "^3.0.0",
+    "react-native-url-preview": "^1.1.9"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}
