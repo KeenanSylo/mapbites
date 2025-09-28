@@ -13,6 +13,7 @@ import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import { VideoMetadata } from '../types';
 import { metadataService } from '../services/urlMetadataService';
+import { videoAnalysisService } from '../services/videoAnalysisService';
 
 export const URLImportScreen: React.FC = () => {
   const { user } = useAuth();
@@ -71,25 +72,59 @@ export const URLImportScreen: React.FC = () => {
     }
   };
 
+  const handleTestOCR = async () => {
+    if (!url.trim()) {
+      Alert.alert('Error', 'Please enter a valid URL');
+      return;
+    }
+
+    try {
+      new URL(url);
+    } catch {
+      Alert.alert('Error', 'Please enter a valid URL');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Test OCR extraction
+      await videoAnalysisService.testOCRExtraction(url);
+      Alert.alert('Debug', 'Check console for OCR test results');
+    } catch (error) {
+      console.error('Error testing OCR:', error);
+      Alert.alert('Error', 'Failed to test OCR extraction');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSaveVideo = async () => {
     if (!extractedMetadata || !user) return;
 
+    setLoading(true);
     try {
       console.log('User ID:', user.id);
       console.log('User object:', user);
       
-      // Create a placeholder restaurant for the video
-      const { data: restaurantData, error: restaurantError } = await supabase
+      // Analyze video for restaurant information
+      console.log('Starting video analysis...');
+      const analysisResult = await videoAnalysisService.analyzeVideo(extractedMetadata.url);
+      console.log('Video analysis result:', analysisResult);
+      
+      // Create restaurant with analyzed information
+      const restaurantData = {
+        name: analysisResult.restaurantName || `Restaurant from ${extractedMetadata.platform}`,
+        address: analysisResult.location || 'Location to be determined from video analysis',
+        latitude: analysisResult.coordinates?.latitude || 0,
+        longitude: analysisResult.coordinates?.longitude || 0,
+        description: `Restaurant discovered from ${extractedMetadata.platform} video${analysisResult.extractedText.length > 0 ? ` - Extracted text: ${analysisResult.extractedText.join(', ')}` : ''}`,
+        tags: [extractedMetadata.platform, 'video-import', ...(analysisResult.confidence > 0.5 ? ['ai-analyzed'] : [])],
+        user_id: user.id,
+      };
+
+      const { data: restaurant, error: restaurantError } = await supabase
         .from('restaurants')
-        .insert({
-          name: `Restaurant from ${extractedMetadata.platform}`,
-          address: 'Location to be determined from video analysis',
-          latitude: 0,
-          longitude: 0,
-          description: `Restaurant discovered from ${extractedMetadata.platform} video`,
-          tags: [extractedMetadata.platform, 'video-import'],
-          user_id: user.id,
-        } as any)
+        .insert(restaurantData as any)
         .select()
         .single();
 
@@ -98,13 +133,13 @@ export const URLImportScreen: React.FC = () => {
         throw restaurantError;
       }
 
-      console.log('Restaurant created:', restaurantData);
+      console.log('Restaurant created:', restaurant);
 
       // Save the video as media
       const { error: mediaError } = await supabase
         .from('media')
         .insert({
-          restaurant_id: (restaurantData as any).id,
+          restaurant_id: (restaurant as any).id,
           user_id: user.id,
           file_url: extractedMetadata.url,
           file_type: 'video',
@@ -117,7 +152,7 @@ export const URLImportScreen: React.FC = () => {
             description: extractedMetadata.description,
             thumbnail: extractedMetadata.thumbnail,
             timestamp: new Date().toISOString(),
-            needsLocationExtraction: true,
+            analysisResult,
           },
         } as any);
 
@@ -126,22 +161,24 @@ export const URLImportScreen: React.FC = () => {
         throw mediaError;
       }
 
-      Alert.alert(
-        'Success!', 
-        'Video imported successfully! The app will analyze the video to extract location information.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              setUrl('');
-              setExtractedMetadata(null);
-            }
+      const successMessage = analysisResult.confidence > 0.5 
+        ? `Video imported successfully! Found: ${restaurantData.name} at ${restaurantData.address}`
+        : 'Video imported successfully! Location analysis completed with limited confidence.';
+      
+      Alert.alert('Success!', successMessage, [
+        {
+          text: 'OK',
+          onPress: () => {
+            setUrl('');
+            setExtractedMetadata(null);
           }
-        ]
-      );
+        }
+      ]);
     } catch (error: any) {
       console.error('Error saving video:', error);
       Alert.alert('Error', `Failed to save video: ${error.message || 'Unknown error'}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -174,6 +211,14 @@ export const URLImportScreen: React.FC = () => {
             ) : (
               <Text style={styles.extractButtonText}>Extract Video Info</Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.debugButton, loading && styles.buttonDisabled]}
+            onPress={handleTestOCR}
+            disabled={loading}
+          >
+            <Text style={styles.debugButtonText}>Test OCR (Debug)</Text>
           </TouchableOpacity>
         </View>
 
@@ -263,6 +308,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
   },
   extractButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  debugButton: {
+    backgroundColor: '#FF9500',
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  debugButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
