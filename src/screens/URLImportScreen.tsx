@@ -9,13 +9,17 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import { VideoMetadata } from '../types';
 import { metadataService } from '../services/urlMetadataService';
 import { videoAnalysisService } from '../services/videoAnalysisService';
+import { uploadMediaWithOCR } from '../services/ocrMediaService';
 
 export const URLImportScreen: React.FC = () => {
+  const navigation = useNavigation();
   const { user } = useAuth();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -93,6 +97,55 @@ export const URLImportScreen: React.FC = () => {
     } catch (error) {
       console.error('Error testing OCR:', error);
       Alert.alert('Error', 'Failed to test OCR extraction');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImagePicker = async () => {
+    if (!user) {
+      Alert.alert('Error', 'Please sign in to upload media');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Media library permission is required');
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const isVideo = asset.type === 'video';
+        
+        // Upload media and trigger OCR
+        const uploadResult = await uploadMediaWithOCR(asset.uri, {
+          type: isVideo ? 'video' : 'photo',
+          sourceApp: 'gallery',
+          userId: user.id,
+        });
+
+        Alert.alert('Success', 'Media uploaded! OCR processing started. Check the media in your profile.', [
+          { text: 'OK', onPress: () => {
+            // Navigate to profile to see the media
+            (navigation as any).navigate('Profile');
+          }}
+        ]);
+      }
+    } catch (error) {
+      console.error('Media upload failed:', error);
+      Alert.alert('Error', 'Failed to upload media. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -252,6 +305,21 @@ export const URLImportScreen: React.FC = () => {
           </View>
         )}
 
+        <View style={styles.importOptions}>
+          <Text style={styles.importOptionsTitle}>Import Options:</Text>
+          
+          <TouchableOpacity
+            style={styles.importOptionButton}
+            onPress={handleImagePicker}
+          >
+            <Text style={styles.importOptionIcon}>📷</Text>
+            <Text style={styles.importOptionTitle}>Upload Photo/Video</Text>
+            <Text style={styles.importOptionDescription}>
+              Upload from gallery or take a new photo
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.supportedPlatforms}>
           <Text style={styles.supportedTitle}>Supported Platforms:</Text>
           <Text style={styles.supportedText}>• TikTok</Text>
@@ -380,5 +448,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 5,
+  },
+  importOptions: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  importOptionsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+  },
+  importOptionButton: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  importOptionIcon: {
+    fontSize: 24,
+    marginRight: 15,
+  },
+  importOptionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+  },
+  importOptionDescription: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
   },
 });

@@ -13,76 +13,120 @@ export interface Database {
         Row: {
           id: string
           name: string
-          address: string
-          latitude: number
-          longitude: number
-          description: string | null
-          tags: string[] | null
+          address: string | null
+          lat: number
+          lng: number
+          place_provider: string
+          place_id: string | null
+          tags: string[]
+          created_by: string
           created_at: string
-          updated_at: string
-          user_id: string
         }
         Insert: {
           id?: string
           name: string
-          address: string
-          latitude: number
-          longitude: number
-          description?: string | null
-          tags?: string[] | null
+          address?: string | null
+          lat: number
+          lng: number
+          place_provider?: string
+          place_id?: string | null
+          tags?: string[]
+          created_by: string
           created_at?: string
-          updated_at?: string
-          user_id: string
         }
         Update: {
           id?: string
           name?: string
-          address?: string
-          latitude?: number
-          longitude?: number
-          description?: string | null
-          tags?: string[] | null
+          address?: string | null
+          lat?: number
+          lng?: number
+          place_provider?: string
+          place_id?: string | null
+          tags?: string[]
+          created_by?: string
           created_at?: string
-          updated_at?: string
-          user_id?: string
         }
       }
       media: {
         Row: {
           id: string
-          restaurant_id: string
           user_id: string
-          file_url: string
-          file_type: 'image' | 'video'
-          file_name: string
-          file_size: number
-          metadata: Json | null
+          restaurant_id: string | null
+          storage_path: string
+          source_app: string | null
+          type: 'video' | 'photo'
+          ocr_frame_paths: string[]
+          ocr_text: string | null
+          status: string
           created_at: string
-          updated_at: string
         }
         Insert: {
           id?: string
-          restaurant_id: string
           user_id: string
-          file_url: string
-          file_type: 'image' | 'video'
-          file_name: string
-          file_size: number
-          metadata?: Json | null
+          restaurant_id?: string | null
+          storage_path: string
+          source_app?: string | null
+          type: 'video' | 'photo'
+          ocr_frame_paths?: string[]
+          ocr_text?: string | null
+          status?: string
           created_at?: string
-          updated_at?: string
         }
         Update: {
           id?: string
-          restaurant_id?: string
           user_id?: string
-          file_url?: string
-          file_type?: 'image' | 'video'
-          file_name?: string
-          file_size?: number
-          metadata?: Json | null
+          restaurant_id?: string | null
+          storage_path?: string
+          source_app?: string | null
+          type?: 'video' | 'photo'
+          ocr_frame_paths?: string[]
+          ocr_text?: string | null
+          status?: string
           created_at?: string
-          updated_at?: string
+        }
+      }
+      place_cache: {
+        Row: {
+          id: string
+          normalized_query: string
+          country: string | null
+          city: string | null
+          provider: string
+          place_id: string | null
+          name: string | null
+          address: string | null
+          lat: number | null
+          lng: number | null
+          score: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          normalized_query: string
+          country?: string | null
+          city?: string | null
+          provider?: string
+          place_id?: string | null
+          name?: string | null
+          address?: string | null
+          lat?: number | null
+          lng?: number | null
+          score?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          normalized_query?: string
+          country?: string | null
+          city?: string | null
+          provider?: string
+          place_id?: string | null
+          name?: string | null
+          address?: string | null
+          lat?: number | null
+          lng?: number | null
+          score?: number | null
+          created_at?: string
         }
       }
     }
@@ -90,7 +134,28 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      process_media: {
+        Args: {
+          media_id: string
+          frame_urls: string[]
+          country?: string
+          city?: string
+        }
+        Returns: {
+          status: string
+          restaurant_id?: string
+          score?: number
+          candidates?: Array<{
+            name: string
+            address: string
+            lat: number
+            lng: number
+            place_id: string
+            score: number
+          }>
+          ocr_text?: string
+        }
+      }
     }
     Enums: {
       [_ in never]: never

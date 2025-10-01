@@ -7,6 +7,8 @@ import { AuthScreen } from '../screens/AuthScreen';
 import { MapScreen } from '../screens/MapScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { URLImportScreen } from '../screens/URLImportScreen';
+import { MediaImportScreen } from '../screens/MediaImportScreen';
+import { ImportResultScreen } from '../screens/ImportResultScreen';
 import { SupabaseDebugScreen } from '../screens/SupabaseDebugScreen';
 
 const Tab = createBottomTabNavigator();

@@ -81,18 +81,18 @@ export const MapScreen: React.FC = () => {
           *,
           media (*)
         `)
-        .eq('user_id', user.id);
+        .eq('created_by', user.id);
 
       if (error) throw error;
 
       const mapPins: MapPin[] = (restaurants || [])
         .filter((restaurant: any) => 
-          restaurant.latitude !== 0 && restaurant.longitude !== 0 &&
-          !isNaN(restaurant.latitude) && !isNaN(restaurant.longitude)
+          restaurant.lat !== 0 && restaurant.lng !== 0 &&
+          !isNaN(restaurant.lat) && !isNaN(restaurant.lng)
         )
         .map((restaurant: any) => ({
           id: restaurant.id,
-          coordinate: [restaurant.longitude, restaurant.latitude],
+          coordinate: [restaurant.lng, restaurant.lat],
           restaurant,
           media: restaurant.media || [],
         }));
@@ -100,9 +100,9 @@ export const MapScreen: React.FC = () => {
       console.log('Loaded restaurants for map:', mapPins.length);
       setPins(mapPins);
       
-      // Check if there's a recently imported restaurant (with video-import tag)
+      // Check if there's a recently imported restaurant (with ai-analyzed tag)
       const videoImported = mapPins.find(pin => 
-        pin.restaurant.tags?.includes('video-import') && 
+        pin.restaurant.tags?.includes('ai-analyzed') && 
         pin.restaurant.created_at && 
         new Date(pin.restaurant.created_at) > new Date(Date.now() - 5 * 60 * 1000) // Last 5 minutes
       );
@@ -153,8 +153,8 @@ export const MapScreen: React.FC = () => {
 
   // Locate restaurant feature
   const locateRestaurant = useCallback((restaurant: any) => {
-    if (mapRef && restaurant.latitude && restaurant.longitude) {
-      const coordinate: [number, number] = [restaurant.longitude, restaurant.latitude];
+    if (mapRef && restaurant.lat && restaurant.lng) {
+      const coordinate: [number, number] = [restaurant.lng, restaurant.lat];
       (mapRef as any).setCamera({
         centerCoordinate: coordinate,
         zoomLevel: 16,
@@ -212,9 +212,9 @@ export const MapScreen: React.FC = () => {
         .insert({
           name: newRestaurantName.trim(),
           address: newRestaurantAddress.trim() || 'Address not provided',
-          latitude: selectedCoordinate[1],
-          longitude: selectedCoordinate[0],
-          user_id: user.id,
+          lat: selectedCoordinate[1],
+          lng: selectedCoordinate[0],
+          created_by: user.id,
         } as any)
         .select()
         .single();
